@@ -1,0 +1,27 @@
+<nav class="d-flex align-items-center justify-content-between">
+  <div class="title">
+    <span>{{ titleTopBar }}</span>
+  </div>
+
+  <div class="d-flex align-items-center gap-4">
+    <div class="d-flex align-items-center position-relative">
+      <span class="username">{{ username }}</span>
+      <button id="dropdown-btn">
+        <i data-feather="chevron-down" width="14px"></i>
+      </button>
+      <div id="dropdown-container" class="dropdown hidden">
+        <a href="#" class="dropdown-item d-flex align-items-center gap-2">
+          <i data-feather="user" width="16px"></i>Profile</a
+        >
+        <a
+          href="{{ url_for('logout') }}"
+          class="dropdown-item d-flex align-items-center gap-2 text-danger"
+          ><i data-feather="power" width="16px"></i>Logout</a
+        >
+      </div>
+      <div id="hamburger" class="hamburger">
+        <i data-feather="menu" width="18px"></i>
+      </div>
+    </div>
+  </div>
+</nav>

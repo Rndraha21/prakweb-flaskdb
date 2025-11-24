@@ -1,0 +1,57 @@
+<nav id="sidebar">
+  <div class="logo">
+    <img src="/images/logo.png" alt="Logo" />
+    <div class="title text-light">Sistem Informasi Karyawan</div>
+  </div>
+  <div class="sidebar-link">
+    <div
+      class="link-item {{ 'active' if request.endpoint == 'index' or request.endpoint == 'search_join' or request.endpoint == 'search_out' else ''}}"
+    >
+      <a
+        href="{{ url_for('index') }}"
+        class="d-flex align-items-center gap-2 text-decoration-none text-light"
+        ><i data-feather="grid"></i><span>Dashboard</span></a
+      >
+    </div>
+    <div
+      class="link-item {{ 'active' if request.endpoint == 'data_karyawan' or request.endpoint == 'search_karyawan' or request.endpoint == 'detail' }}"
+    >
+      <a
+        href="{{ url_for('data_karyawan') }}"
+        class="d-flex align-items-center gap-2 text-decoration-none text-light"
+      >
+        <i data-feather="users"></i>
+        <span>Karyawan</span>
+      </a>
+    </div>
+    <div
+      class="link-item {{ 'active' if request.endpoint == 'manajemen_karyawan' or request.endpoint == 'edit_data' }}"
+    >
+      <a
+        href="{{ url_for('manajemen_karyawan') }}"
+        class="d-flex align-items-center gap-2 text-decoration-none text-light"
+      >
+        <i data-feather="user-plus"></i>
+        <span>Manajemen</span>
+      </a>
+    </div>
+    <div class="link-item">
+      <a
+        href="#"
+        class="d-flex align-items-center gap-2 text-decoration-none text-light"
+      >
+        <i data-feather="trending-up"></i>
+        <span>Performa</span>
+      </a>
+    </div>
+    <div class="link-item">
+      <a
+        href="#"
+        class="d-flex align-items-center gap-2 text-decoration-none text-light"
+      >
+        <i data-feather="settings"></i>
+        <span>Pengaturan</span>
+      </a>
+    </div>
+  </div>
+</nav>

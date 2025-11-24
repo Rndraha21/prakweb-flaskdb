@@ -1,0 +1,117 @@
+{% extends 'layoutDashboard.html' %} {% block title %} Dashboard {% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-6">
+    <h5>Karyawan baru bulan ini</h5>
+    <form
+      action="{{ url_for('search_join') }}"
+      method="GET"
+      class="search-form-home"
+    >
+      <div class="d-flex align-items-center">
+        <input
+          type="search"
+          class="search"
+          placeholder="Cari berdasarkan nama atau jabatan"
+          name="join"
+          autocomplete="off"
+        />
+        <button type="submit">
+          <i data-feather="search" class="text-secondary"></i>
+        </button>
+      </div>
+    </form>
+    <table id="table-join">
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Status</th>
+          <th>Bergabung</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in data_masuk %}
+        <tr>
+          <td><a href="{{ url_for('detail', nip=d[4]) }}"><img src="{{ d[2] }}" alt="Foto {{ d[0] }}" /></a>{{ d[0] }}</td>
+          <td><span class="badge rounded-pill text-bg-success">{{ d[1] }}</span></td>
+          <td>{{ d[3].strftime('%d %B %Y') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="pagination">
+      {% if page > 1 %}
+      <a href="{{ url_for('index', page=page-1) }}" class="text-decoration-none"><i data-feather="chevrons-left" width="0.8rem"></i><span>Prev</span></a>
+      {% endif %}
+      {% if total_pages > 1 %}
+      <span>Halaman {{ page }} dari {{ total_pages }}</span>
+      {% endif %}
+      {% if page < total_pages %} <a href="{{ url_for('index',  page=page+1) }}" class="text-decoration-none">
+        <span>Next</span><i data-feather="chevrons-right" width="0.8rem"></i></a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-md-6">
+    <h5>Karyawan yang telah keluar</h5>
+    <form action="{{ url_for('search_out') }}" method="GET" class="search-form-home">
+      <div class="d-flex align-items-center">
+        <input
+          type="search"
+          class="search"
+          placeholder="Cari berdasarkan nama"
+          name="out"
+          autocomplete="off"
+        />
+        <button type="submit">
+          <i data-feather="search" class="text-secondary"></i>
+        </button>
+      </div>
+    </form>
+    <table id="table-out">
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Status</th>
+          <th>Keluar</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in data_keluar %}
+        <tr>
+          <td><img src="{{ d[3] }}" alt="Foto {{ d[0] }}" />{{ d[0] }}</td>
+          <td>
+            <span {% if d[1] == 'Resign' %}
+              class="badge rounded-pill text-bg-info"
+              {% else %}
+              class="badge rounded-pill text-bg-warning"
+            {% endif %}>{{ d[1] }} </span>
+          </td>
+          <td>{{ d[2].strftime('%d %B %Y') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="pagination">
+      {% if pageout > 1 %}
+      <a href="{{ url_for('index', pageout=pageout-1) }}" class="text-decoration-none"><i data-feather="chevrons-left" width="0.8rem"></i><span>Prev</span></a>
+      {% endif %}
+      {% if total_pages_out > 1 %}
+      <span>Halaman {{ page }} dari {{ total_pages_out }}</span>
+      {% endif %}
+      {% if pageout < total_pages_out %} <a href="{{ url_for('index',  pageout=pageout+1) }}" class="text-decoration-none">
+        <span>Next</span><i data-feather="chevrons-right" width="0.8rem"></i></a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<!-- <select id="departemen">
+  <option value="">-- Pilih Departemen --</option>
+  {% for dept in departemen %}
+  <option value="{{ dept }}">{{ dept }}</option>
+  {% endfor %}
+</select>
+
+<select id="jabatan">
+  <option value="" disabled selected>-- Pilih Jabatan --</option>
+</select> -->
+{% endblock %}

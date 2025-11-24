@@ -1,0 +1,45 @@
+<div class="modal-overlay" id="modalConfirmation">
+  <div class="modal-card">
+    <div class="modal-title mb-3 d-flex align-items-center">
+      <h4>
+        <i
+          data-feather="alert-triangle"
+          width="1.5rem"
+          class="text-warning"
+        ></i>
+        Konfirmasi Status Keluar
+      </h4>
+      <span><i data-feather="x" id="batal" class="text-danger"></i></span>
+    </div>
+
+    <p class="mb-4">
+      Pilih alasan penghapusan data karyawan ini. Aksi ini tidak dapat
+      dibatalkan.
+    </p>
+
+    <form action="{{ url_for('delete', nip=data[0]) }}" method="POST">
+      <div class="modal-actions">
+        <div class="action-group">
+          <a href="#" class="btn btn-warning" id="resign">
+            <div class="d-flex align-items-center gap-2">
+              <i data-feather="user-minus" width="1rem"></i>
+              <span class="status">Resign</span>
+            </div>
+          </a>
+          <a href="#" class="btn btn-info" id="phk">
+            <div class="d-flex align-items-center gap-2">
+              <i data-feather="user-x" width="1rem"></i
+              ><span class="status">PHK</span>
+            </div>
+          </a>
+        </div>
+        <input
+          type="submit"
+          value="Simpan"
+          id="btn-simpan"
+          class="d-none btn btn-outline-primary"
+        />
+      </div>
+    </form>
+  </div>
+</div>

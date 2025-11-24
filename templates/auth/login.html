@@ -1,0 +1,64 @@
+{% extends 'layoutAuthentication.html' %} {% block title %} Login {% endblock %}
+{% block content %}
+<div class="login-container">
+  <div class="row">
+    <div class="col-md-6">
+      <img src="/images/auth.svg" alt="Auth Picture" />
+    </div>
+    {% macro showerror(field) -%} {% if field.errors %} {% for err in
+    field.errors %}
+    <span style="color: #ff6347; font-size: 12px">{{ err }}</span>
+    {% endfor %} {% endif %} {%- endmacro %}
+
+    <form
+      action="{{ url_for('login') }}"
+      method="POST"
+      class="col-md-6"
+      novalidate
+    >
+      {{ form.hidden_tag() }}
+      <div class="form-content-container">
+        <div>
+          <h4 class="form-title">Login Sebagai Admin</h4>
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %}
+          <div class="container pt-3" id="flash-msg-container">
+            {% for category, message in messages %}
+            <div
+              class="alert alert-{{ category }} alert-dismissible fade show"
+              role="alert"
+            >
+              <span id="message"
+                ><i data-feather="alert-circle" width="1rem" class="me-2"></i>{{ message }}</span
+              >
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %} {% endwith %}
+          <div class="input-container">
+            <label for="username"
+              ><i data-feather="user" width="16px"></i
+            ></label>
+            <div class="input">
+              {{ form.username(autocomplete="off") }}
+              <span id="message">{{ showerror(form.username) }}</span>
+            </div>
+          </div>
+          <div class="input-container">
+            <label for="password"
+              ><i data-feather="lock" width="16px"></i
+            ></label>
+            <div class="input">
+              {{ form.password() }}
+              <span id="message">{{ showerror(form.password) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="input-container">
+          <button type="submit">Login</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
