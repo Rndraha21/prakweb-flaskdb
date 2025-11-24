@@ -1,9 +1,10 @@
+import os
+from werkzeug.utils import secure_filename
 import math
 from flask import Flask, render_template, redirect, url_for, request, jsonify, flash, session
 from functools import wraps
-
-from form import LoginAuthencation
-from models import Karyawan, AdminAuth
+from form import LoginAuthencation, FormEditKaryawan, FormAddKaryawan
+from models import Karyawan, AdminAuth, ProfileKami
 
 app = Flask(__name__, static_folder='static', static_url_path='/')
 app.config['SECRET_KEY'] = 'aifhe80qry4yefhncnvauhqer7yfdhdj'
@@ -81,18 +82,17 @@ def index():
     )
 
 
-@app.route('/data_jabatan/<dept>')
-def get_data(dept):
-    data = {
-        "Engineering": ["Backend Engineer", "Frontend Engineer", "DevOps Engineer"],
-        "Product": ["Product Manager", "UI/UX Designer", "UX Researcher"],
-        "Marketing": ["Digital Marketer", "SEO Specialist"],
-    }
-
-    if dept in data:
-        return jsonify(data[dept])
-
-    return redirect(url_for('index'))
+@app.route('/dashboard/profile/staphsec')
+def profile():
+    model = ProfileKami()
+    data = model.getAllProfile()
+    print(data)
+    return render_template(
+        '/dashboard/profile.html',
+        data=data, 
+        titleTopBar="Profile Kami",
+        username="StaphSec"
+    )
 
 
 @app.route('/dashboard/home/search_join')
@@ -192,14 +192,44 @@ def search_karyawan():
 @login_first
 def detail(nip):
     model = Karyawan()
-    data = model.details(nip)
+    data = model.getKaryawanByNip(nip)
+    if not data:
+        flash('Data tidak ditemukan', 'info')
+        return redirect(url_for('index'))
+
+    nama = data[1]
 
     if data:
         return render_template(
             'dashboard/detailKaryawan.html',
-            titleTopBar="Detail",
+            titleTopBar=f"Detail {nama}",
             username="Admin",
             data=data
+        )
+    flash("Data tidak ditemukan!", 'danger')
+    return redirect(url_for('data_karyawan'))
+
+
+@app.route('/dashboard/data_karyawan/detail_keluar/<nip>')
+@login_first
+def detail_karyawan_keluar(nip):
+    model = Karyawan()
+    data = model.getDetailKaryawanOut(nip)
+
+    if not data:
+        flash("Data tidak ditemukan", "info")
+        return redirect(url_for('data_karyawan'))
+
+    nama = data[1]
+    keluar = True
+
+    if data:
+        return render_template(
+            'dashboard/detailKaryawan.html',
+            titleTopBar=f"Detail Keluar - {nama}",
+            username="Admin",
+            data=data,
+            keluar=keluar
         )
     flash("Data tidak ditemukan!", 'danger')
     return redirect(url_for('data_karyawan'))
@@ -229,16 +259,185 @@ def delete(nip):
         return redirect(url_for('detail', nip=nip))
 
 
-@app.route('/manajemen_karyawan')
+@app.route('/manajemen_karyawan', methods=['GET', 'POST'])
 @login_first
 def manajemen_karyawan():
-    return 'hello'
+    model = Karyawan()
+    form = FormAddKaryawan()
+
+    total_karyawan_aktif = model.karyawanAktif()
+    total_karyawan_keluar = model.KaryawanKeluar()
+
+    # 1. ISI DROPDOWN DEPARTEMEN (Wajib di awal)
+    list_dept = model.getAllDepartemen()
+    form.departemen.choices = [(row[0], row[1]) for row in list_dept]
+
+    # 2. LOGIKA DEPENDENT DROPDOWN JABATAN
+    if request.method == 'POST':
+        # Kalau Submit: Ambil ID Dept dari inputan user
+        dept_id = form.departemen.data
+        list_jabatan = model.getJabatanByDept(dept_id)
+        form.jabatan.choices = [(j['id'], j['nama']) for j in list_jabatan]
+    else:
+        # Kalau GET: Kosongin aja atau default (opsional)
+        form.jabatan.choices = []
+
+    # 3. PROSES SUBMIT
+    if request.method == 'POST':
+        if form.validate_on_submit():
+
+            nama_foto_db = 'default.jpg'  # Default kalau gak upload
+            file_path_sementara = None   # Penanda buat rollback
+
+            # --- PROSES UPLOAD FOTO ---
+            if form.foto_profil.data:
+                file_gambar = form.foto_profil.data
+                filename = secure_filename(file_gambar.filename)
+
+                nama_unik = f"{form.nip.data}_{filename}"
+
+                save_path = os.path.join(
+                    app.root_path, 'static/uploads', nama_unik)
+                file_gambar.save(save_path)
+
+                nama_foto_db = nama_unik
+                file_path_sementara = save_path
+
+            # --- INSERT KE DATABASE ---
+            berhasil = model.add_karyawan(
+                nip=form.nip.data,
+                nama=form.nama.data,
+                jenis_kelamin=form.jenis_kelamin.data,
+                id_jabatan=form.jabatan.data,
+                alamat=form.alamat.data,
+                email=form.email.data,
+                no_hp=form.no_hp.data,
+                foto=nama_foto_db,
+                tgl_gabung=form.tanggal_bergabung.data
+            )
+
+            if berhasil:
+                # SUKSES: Redirect ke Data Karyawan
+                flash("Data karyawan berhasil ditambahkan!", "success")
+                return redirect(url_for('data_karyawan'))
+            else:
+                # GAGAL: ROLLBACK FILE (Hapus Foto Sampah)
+                if file_path_sementara and os.path.exists(file_path_sementara):
+                    os.remove(file_path_sementara)
+                    print(
+                        f"Rollback: File {nama_foto_db} berhasil dihapus karena DB gagal.")
+
+                flash("Gagal menyimpan ke database (Cek NIP kembar?)", "danger")
+
+        else:
+            errors = form.errors.items()
+            return render_template(
+                'dashboard/manajemen.html',
+                username="Admin",
+                titleTopBar="Manajemen Data",
+                form=form,
+                errors=errors,
+                total_aktif=total_karyawan_aktif[0],
+                total_keluar=total_karyawan_keluar[0]
+            )
+
+    return render_template(
+        'dashboard/manajemen.html',
+        username="Admin",
+        titleTopBar="Manajemen Data",
+        form=form,
+        total_aktif=total_karyawan_aktif[0],
+        total_keluar=total_karyawan_keluar[0]
+    )
 
 
-@app.route('/manajemen_karyawan/edit/<nip>')
+@app.route('/manajemen_karyawan/edit/<nip>', methods=['POST', 'GET'])
 @login_first
 def edit_data(nip):
-    return "hai"
+    model = Karyawan()
+    form = FormEditKaryawan()
+    data_lama = model.getKaryawanByNip(nip)
+
+    if not data_lama:
+        flash("Data tidak ditemukan!", 'warning')
+        return redirect(url_for('index'))
+
+    list_dept = model.getAllDepartemen()
+    form.departemen.choices = [(row[0], row[1]) for row in list_dept]
+
+    if request.method == 'POST':
+        dept_id = form.departemen.data
+    else:
+        dept_id = data_lama[12]
+
+    list_jabatan = model.getJabatanByDept(dept_id)
+    form.jabatan.choices = [(j['id'], j['nama']) for j in list_jabatan]
+
+    nama = data_lama[1]
+
+    if request.method == 'GET':
+        form.alamat.data = data_lama[5]
+        form.jabatan.data = data_lama[13]
+        form.departemen.data = data_lama[12]
+        form.email.data = data_lama[6]
+        form.no_hp.data = data_lama[7]
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            cek_jab = form.jabatan.data == data_lama[13]
+            cek_dept = form.departemen.data == data_lama[12]
+            cek_email = form.email.data == data_lama[6]
+            cek_hp = form.no_hp.data == data_lama[7]
+            cek_alamat = form.alamat.data == data_lama[5]
+
+            if cek_jab and cek_dept and cek_email and cek_hp and cek_alamat:
+                flash("Tidak ada data yang berubah.", 'info')
+                return redirect(url_for('detail', nip=nip))
+
+            berhasil = model.update_data_karyawan(
+                nip=nip,
+                jabatan=form.jabatan.data,
+                email=form.email.data,
+                no_hp=form.no_hp.data,
+                alamat=form.alamat.data,
+            )
+
+            if berhasil:
+                flash("Data berhasil diupdate!", 'success')
+                return redirect(url_for('detail', nip=nip))
+            else:
+                flash("Gagal mengupdate database!", 'danger')
+                return redirect(url_for('edit_data', nip=nip))
+
+        else:
+            errors = form.errors.items()
+            return render_template(
+                'dashboard/edit.html',
+                form=form, errors=errors,
+                data=data_lama, username='Admin',
+                titleTopBar=f"Edit Data - {nama}"
+            )
+
+    return render_template(
+        'dashboard/edit.html',
+        titleTopBar=f"Edit Data - {nama}",
+        username="Admin",
+        data=data_lama,
+        form=form
+    )
+
+
+@app.route('/api/jabatan/<int:id_dept>')
+def get_jabatan_by_dept(id_dept):
+    model = Karyawan()
+
+    data_jabatan = model.getJabatanByDept(id_dept)
+    return jsonify(data_jabatan)
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404/404.html'), 404
 
 
 if __name__ == '__main__':

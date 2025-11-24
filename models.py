@@ -35,7 +35,6 @@ class Karyawan:
         if self.db:
             self.db.close()
 
-    # Method untuk mendapatkan semua karyawan
     def getAllKaryawan(self, page, limit):
         self.openDB()
         offset = (page - 1) * limit
@@ -49,7 +48,8 @@ class Karyawan:
                     k.email,
                     k.no_hp,
                     k.foto_profil,
-                    k.tanggal_bergabung
+                    k.tanggal_bergabung,
+                    k.id_jabatan
             FROM table_karyawan k
             JOIN table_jabatan j ON k.id_jabatan = j.id_jabatan
             JOIN table_departemen d ON j.id_dept = d.id_dept
@@ -72,7 +72,6 @@ class Karyawan:
         self.closeDB()
         return data, total
 
-    # Method untuk mendapatkan karyawan yang join bulan ini
     def getKaryawanJoinThisMonth(self, page, limit):
         self.openDB()
         offset = (page-1) * limit
@@ -89,6 +88,7 @@ class Karyawan:
                     ON j.id_dept = d.id_dept
             WHERE   MONTH(k.tanggal_bergabung) = MONTH(CURDATE())
                     AND YEAR(k.tanggal_bergabung) = YEAR(CURDATE())
+                    AND k.status = 'Active'
             ORDER BY k.tanggal_bergabung DESC
             LIMIT %s OFFSET %s
         """
@@ -109,7 +109,6 @@ class Karyawan:
         self.closeDB()
         return data, total
 
-    # Method untuk mendapatkan karyawan yang telah keluar
     def getKaryawanOut(self, page, limit):
         self.openDB()
         offset = (page - 1) * limit
@@ -117,7 +116,8 @@ class Karyawan:
             SELECT  k.nama,
                     k.status,
                     k.tanggal_keluar,
-                    k.foto_profil
+                    k.foto_profil,
+                    k.nip
             FROM table_karyawan k
             JOIN table_jabatan j 
                     ON k.id_jabatan = j.id_jabatan
@@ -142,7 +142,6 @@ class Karyawan:
         self.closeDB()
         return data, total_keluar
 
-    # Method untuk mencari karyawan yang bergabung bulan ini
     def searchJoin(self, keyword, page, limit):
         self.openDB()
         offset = (page - 1) * limit
@@ -186,7 +185,6 @@ class Karyawan:
         self.closeDB()
         return data, total
 
-    # Method untuk mencari karyawan yang telah keluar
     def searchOut(self, keyword, page, limit):
         self.openDB()
         offset = (page - 1) * limit
@@ -222,7 +220,6 @@ class Karyawan:
         self.closeDB()
         return data, total
 
-    # Method untuk mencari karyawan
     def searchKaryawan(self, keyword, page, limit):
         self.openDB()
         offset = (page - 1) * limit
@@ -276,8 +273,7 @@ class Karyawan:
         self.closeDB()
         return data, total
 
-    # Method untuk melihat detail karyawan tertentu
-    def details(self, nip):
+    def getKaryawanByNip(self, nip):
         self.openDB()
         query = """
             SELECT  k.nip,
@@ -290,7 +286,10 @@ class Karyawan:
                     k.no_hp,
                     k.foto_profil,
                     k.tanggal_bergabung,
-                    k.status
+                    k.tanggal_keluar,
+                    k.status,
+                    d.id_dept,
+                    k.id_jabatan
             FROM table_karyawan k
             JOIN table_jabatan j ON k.id_jabatan = j.id_jabatan
             JOIN table_departemen d ON j.id_dept = d.id_dept
@@ -299,6 +298,32 @@ class Karyawan:
 
         self.cursor.execute(query, (nip,))
         data = self.cursor.fetchone()
+        return data
+
+    def getDetailKaryawanOut(self, nip):
+        self.openDB()
+        query = """
+            SELECT  k.nip,
+                    k.nama,
+                    k.jenis_kelamin,
+                    j.jabatan,
+                    d.departemen,
+                    k.alamat,
+                    k.email,
+                    k.no_hp,
+                    k.foto_profil,
+                    k.tanggal_bergabung,
+                    k.tanggal_keluar,
+                    k.status
+            FROM table_karyawan k
+            JOIN table_jabatan j ON k.id_jabatan = j.id_jabatan
+            JOIN table_departemen d ON j.id_dept = d.id_dept
+            WHERE k.nip = %s AND k.status != 'Active'
+        """
+
+        self.cursor.execute(query, (nip,))
+        data = self.cursor.fetchone()
+        print(data)
         return data
 
     def soft_delete_karyawan(self, nip, status, tanggal_keluar):
@@ -317,12 +342,119 @@ class Karyawan:
 
         except Exception as e:
             print(f"Error: {e}")
-            self.db.rollback()  # Batalin kalau error
+            self.db.rollback()
             return False
 
         finally:
             self.closeDB()
 
+    def update_data_karyawan(self, nip, jabatan, email, no_hp, alamat):
+        self.openDB()
+        query = """
+            UPDATE table_karyawan
+            SET id_jabatan  = %s,
+                email       = %s,
+                no_hp       = %s,
+                alamat      = %s
+            WHERE nip       = %s
+        """
+
+        value = (jabatan, email, no_hp, alamat, nip)
+
+        self.cursor.execute(query, value)
+        self.db.commit()
+        return True
+
+    def getAllDepartemen(self):
+        self.openDB()
+        self.cursor.execute("SELECT id_dept, departemen FROM table_departemen")
+        res = self.cursor.fetchall()
+        self.closeDB()
+        return res
+
+    def getJabatanByDept(self, id_dept):
+        self.openDB()
+        self.cursor.execute(
+            "SELECT id_jabatan, jabatan FROM table_jabatan WHERE id_dept = %s", (id_dept,))
+        res = [{'id': row[0], 'nama': row[1]}
+               for row in self.cursor.fetchall()]
+        self.closeDB()
+        return res
+
+    def add_karyawan(self, nip, nama, jenis_kelamin, id_jabatan, alamat, email, no_hp, foto, tgl_gabung):
+        self.openDB()
+        try:
+            sql = """
+                INSERT INTO table_karyawan 
+                (nip, nama, jenis_kelamin, id_jabatan, alamat, email, no_hp, foto_profil, tanggal_bergabung)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            val = (nip, nama, jenis_kelamin, id_jabatan,
+                   alamat, email, no_hp, foto, tgl_gabung)
+
+            self.cursor.execute(sql, val)
+            self.db.commit()
+            return True
+
+        except Exception as e:
+            print(f"Error Add Karyawan: {e}")
+            self.db.rollback()
+            return False
+
+        finally:
+            self.closeDB()
+
+    def karyawanAktif(self):
+        self.openDB()
+        query = """
+            SELECT COUNT(*) FROM table_karyawan WHERE status = 'Active'
+        """
+        self.cursor.execute(query)
+        data = self.cursor.fetchone()
+        self.closeDB()
+        return data
+    
+    def KaryawanKeluar(self):
+        self.openDB()
+        query = """
+            SELECT COUNT(*) FROM table_karyawan WHERE status != 'Active'
+        """
+        self.cursor.execute(query)
+        data = self.cursor.fetchone()
+        self.closeDB()
+        return data
+
+class ProfileKami:
+    def __init__(self):
+        self.db = None
+        self.cursor = None
+    
+    def openDB(self):
+        self.db = pymysql.connect(
+            host=config.DB_HOST,
+            user=config.DB_USER,
+            database=config.DB_NAME,
+            password=config.DB_PASSWORD,
+            port=config.DB_PORT
+        )
+
+        self.cursor = self.db.cursor()
+
+    def closeDB(self):
+        if self.cursor:
+            self.cursor.close()
+        if self.db:
+            self.db.close()
+            
+    def getAllProfile(self):
+        self.openDB()
+        query = """
+            SELECT * FROM profile_kami
+        """
+        
+        self.cursor.execute(query)
+        data = self.cursor.fetchall()
+        return data
 
 class AdminAuth():
     def __init__(self):

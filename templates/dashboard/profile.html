@@ -1,0 +1,22 @@
+{% extends 'layoutDashboard.html' %} {% block title %} Profile Kami {% endblock
+%} {% block content %}
+<div class="d-flex flex-md-row flex-column justify-content-around">
+  {% for d in data %}
+  <div class="d-flex flex-column align-items-center justify-content-center">
+    <div class="">
+      <img
+        src="{{ url_for('static', filename='images/' + d[1]) }}"
+        alt="{{ d[0] }}"
+        class="rounded-circle img-fluid"
+        style="width: 150px; height: 150px; object-fit: cover;"
+      />
+    </div>
+    <div>
+      <h3 class="mb-0 mt-4 text-center">{{ d[0] }}</h3>
+      <h5 class="mb-4 text-center text-secondary">{{ d[2] }}</h5>
+      <p class="mb-4 text-center text-secondary">{{ d[3] }}</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

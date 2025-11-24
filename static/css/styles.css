@@ -274,6 +274,18 @@ form.search-form-home button {
   margin-bottom: 2rem;
 }
 
+.detail-edit {
+  grid-area: detail;
+}
+
+.detail-edit textarea {
+  resize: none;
+}
+
+.form-add textarea {
+  resize: none;
+}
+
 .detail-grid {
   grid-area: detail;
   background: white;

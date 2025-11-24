@@ -3,13 +3,28 @@ block content %}
 <div class="detail-container">
   <div class="profile-grid">
     <div class="profile">
-      <img src="{{ data[8] }}" alt="{{ data[1] }}" />
+      {% if data[8].startswith('http') %}
+      <img
+        src="{{ data[8] }}"
+        alt="{{ data[1] }}"
+        class="rounded-circle img-fluid"
+        style="width: 150px; height: 150px; object-fit: cover"
+      />
+      {% else %}
+      <img
+        src="{{ url_for('static', filename='uploads/' + data[8]) }}"
+        alt="{{ data[1] }}"
+        class="rounded-circle img-fluid"
+        style="width: 150px; height: 150px; object-fit: cover"
+      />
+      {% endif %}
     </div>
     <div>
       <h3 class="mb-4 text-center">{{ data[1] }}</h3>
       <h5 class="mb-2 text-center text-secondary">{{ data[3] }}</h5>
       <p class="mb-4 text-center text-secondary">{{ data[6] }}</p>
     </div>
+    {% if not keluar %}
     <div class="w-100">
       <button
         class="btn text-light"
@@ -19,6 +34,7 @@ block content %}
         Keluar
       </button>
     </div>
+    {% endif %}
   </div>
 
   <div class="detail-grid">
@@ -26,13 +42,15 @@ block content %}
       <h5 class="m-0 fw-bold">Informasi Pribadi</h5>
       <div>
         <span class="badge" style="background: var(--background-sidebar)"
-          >{{ data[10] }}</span
+          >{{ data[11] }}</span
         >
+        {% if not keluar %}
         <a
           href="{{ url_for('edit_data', nip=data[0]) }}"
           class="text-decoration-none text-danger"
           ><i data-feather="edit" width="20px"></i
         ></a>
+        {% endif %}
       </div>
     </div>
 
@@ -73,6 +91,12 @@ block content %}
         <span class="label">Tanggal Gabung</span>
         <span class="value">{{ data[9] }}</span>
       </div>
+      {% if keluar %}
+      <div class="info-box">
+        <span class="label">Tanggal Keluar</span>
+        <span class="value">{{ data[10] }}</span>
+      </div>
+      {% endif %}
     </div>
   </div>
 

@@ -32,7 +32,11 @@
       <tbody>
         {% for d in data_masuk %}
         <tr>
+        {% if d[2].startswith('http') %}
           <td><a href="{{ url_for('detail', nip=d[4]) }}"><img src="{{ d[2] }}" alt="Foto {{ d[0] }}" /></a>{{ d[0] }}</td>
+        {% else %}
+          <td><a href="{{ url_for('detail', nip=d[4]) }}"><img src="{{ url_for('static', filename='uploads/' + d[2]) }}" alt="Foto {{ d[0] }}" /></a>{{ d[0] }}</td>
+        {% endif %}
           <td><span class="badge rounded-pill text-bg-success">{{ d[1] }}</span></td>
           <td>{{ d[3].strftime('%d %B %Y') }}</td>
         </tr>
@@ -78,7 +82,12 @@
       <tbody>
         {% for d in data_keluar %}
         <tr>
-          <td><img src="{{ d[3] }}" alt="Foto {{ d[0] }}" />{{ d[0] }}</td>
+        {% if d[3].startswith('http') %}
+          <td><a href="{{ url_for('detail_karyawan_keluar', nip=d[4]) }}"><img src="{{ d[3] }}" alt="Foto {{ d[0] }}" /></a>{{ d[0] }}</td>
+        {% else %}
+          <td><a href="{{ url_for('detail_karyawan_keluar', nip=d[4]) }}"><img src="{{ url_for('static', filename='uploads/' + d[3]) }}" alt="Foto {{ d[0] }}" /></a>{{ d[0] }}</td>
+        {% endif %}
+
           <td>
             <span {% if d[1] == 'Resign' %}
               class="badge rounded-pill text-bg-info"

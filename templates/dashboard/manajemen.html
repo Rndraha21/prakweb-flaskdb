@@ -1,0 +1,173 @@
+{% extends 'layoutDashboard.html' %} {% block title %} Manajemen Karyawan {%
+endblock %} {% block content %}
+<div class="row g-4">
+  {% macro showerror(field) -%} {% if field.errors %} {% for err in field.errors
+  %}
+  <div class="text-danger small mt-1">
+    <i data-feather="alert-circle" style="width: 12px"></i> {{ err }}
+  </div>
+  {% endfor %} {% endif %} {%- endmacro %}
+
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-lg h-100">
+      <div class="card-header bg-white py-3 border-bottom-0">
+        <h5 class="mb-0 fw-bold text-primary">
+          <i data-feather="user-plus" class="me-2"></i>Tambah Karyawan Baru
+        </h5>
+      </div>
+
+      <div class="card-body p-4 pt-0 form-add">
+        <form
+          action="{{ url_for('manajemen_karyawan') }}"
+          method="POST"
+          enctype="multipart/form-data"
+          novalidate
+        >
+          {{ form.hidden_tag() }}
+
+          <h6 class="text-secondary text-uppercase fw-bold small mb-3 mt-2">
+            Identitas Pribadi
+          </h6>
+          <div class="row g-3 mb-4">
+            <!-- NIP & Nama -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">NIP</label>
+              {{ form.nip(class="form-control") }} {{ showerror(form.nip) }}
+            </div>
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Nama Lengkap</label>
+              {{ form.nama(class="form-control") }} {{ showerror(form.nama) }}
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label fw-semibold">Foto Profil</label>
+              {{ form.foto_profil(class="form-control") }} {{
+              showerror(form.foto_profil) }}
+              <div class="form-text small">Format: JPG/PNG, Maks 2MB.</div>
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label fw-semibold d-block"
+                >Jenis Kelamin</label
+              >
+              <div class="d-flex gap-3">
+                {% for subfield in form.jenis_kelamin %}
+                <div class="form-check">
+                  {{ subfield(class="form-check-input") }} {{
+                  subfield.label(class="form-check-label") }}
+                </div>
+                {% endfor %}
+              </div>
+              {{ showerror(form.jenis_kelamin) }}
+            </div>
+          </div>
+
+          <hr class="text-muted opacity-25" />
+
+          <h6 class="text-secondary text-uppercase fw-bold small mb-3">
+            Informasi Pekerjaan
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Departemen</label>
+              {{ form.departemen(class="form-select", id="departemen") }} {{
+              showerror(form.departemen) }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Jabatan</label>
+              {{ form.jabatan(class="form-select", id="jabatan") }} {{
+              showerror(form.jabatan) }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Tanggal Bergabung</label>
+              {{ form.tanggal_bergabung(class="form-control", type="date") }} {{
+              showerror(form.tanggal_bergabung) }}
+            </div>
+          </div>
+
+          <hr class="text-muted opacity-25" />
+
+          <h6 class="text-secondary text-uppercase fw-bold small mb-3">
+            Kontak & Alamat
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email</label>
+              {{ form.email(class="form-control") }} {{ showerror(form.email) }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">No. HP</label>
+              {{ form.no_hp(class="form-control") }} {{ showerror(form.no_hp) }}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Alamat Domisili</label>
+              {{ form.alamat(class="form-control", rows="3") }} {{
+              showerror(form.alamat) }}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="reset" class="btn btn-danger text-light">
+              Reset Form
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary px-4 fw-bold shadow-sm"
+            >
+              <i data-feather="save" class="me-1"></i> Simpan Data Karyawan
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-lg mb-4">
+      <div class="card-body p-4 d-flex align-items-center gap-3">
+        <div
+          class="icon-box bg-primary-subtle text-primary rounded-3 d-flex align-items-center justify-content-center"
+          style="width: 50px; height: 50px"
+        >
+          <i data-feather="users"></i>
+        </div>
+        <div>
+          <h6 class="text-secondary mb-1">Jumlah Karyawan</h6>
+          <h3 class="fw-bold mb-0">{{ total_aktif }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-lg mb-4">
+      <div class="card-body p-4 d-flex align-items-center gap-3">
+        <div
+          class="icon-box bg-danger-subtle text-danger rounded-3 d-flex align-items-center justify-content-center"
+          style="width: 50px; height: 50px"
+        >
+          <i data-feather="user-minus"></i>
+        </div>
+        <div>
+          <h6 class="text-secondary mb-1">Jumlah Karyawan Keluar</h6>
+          <h3 class="fw-bold mb-0">{{ total_keluar }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-lg bg-info-subtle">
+      <div class="card-body">
+        <h6 class="fw-bold text-info-emphasis">
+          <i data-feather="info" class="me-1"></i> Petunjuk
+        </h6>
+        <ul class="small mb-0 text-info-emphasis ps-3">
+          <li>NIP harus unik (5 digit).</li>
+          <li>Foto profil maksimal 10MB.</li>
+          <li>Pastikan email aktif untuk notifikasi.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
